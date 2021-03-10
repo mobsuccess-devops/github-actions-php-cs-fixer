@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  php-cs-fixer:
+    build: .
+    image: public.ecr.aws/u9q7y3l4/github-actions-php-cs-fixer
+
