@@ -3,5 +3,5 @@ version: '3.8'
 services:
   php-cs-fixer:
     build: .
-    image: public.ecr.aws/u9q7y3l4/github-actions-php-cs-fixer
+    image: public.ecr.aws/u9q7y3l4/github-actions-php-cs-fixer:v3.13.0
 
