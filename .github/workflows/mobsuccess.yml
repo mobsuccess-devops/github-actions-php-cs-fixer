@@ -5,6 +5,15 @@
 name: Mobsuccess Compliance
 
 on:
+  merge_group:
+    types:
+      - checks_requested
+
+  issue_comment:
+    types:
+      - created
+      - edited
+
   pull_request:
     types:
       - opened
@@ -20,7 +29,7 @@ jobs:
       - uses: mobsuccess-devops/github-actions-mobsuccess@master
         with:
           github-token: ${{ github.token }}
-          amplify-uri: ${{ secrets.AWS_AMPLIFY_URI }}
-          storybook-amplify-uri: ${{ secrets.AWS_STORYBOOK_AMPLIFY_URI }}
+          amplify-uri: ${{ secrets.AWS_AMPLIFY_URI }}${{ vars.AWS_AMPLIFY_URI }}
+          storybook-amplify-uri: ${{ secrets.AWS_STORYBOOK_AMPLIFY_URI }}${{ vars.AWS_STORYBOOK_AMPLIFY_URI }}
           action: "validate-pr"
 # DO NOT EDIT: END
