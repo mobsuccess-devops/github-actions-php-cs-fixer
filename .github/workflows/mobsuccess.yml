@@ -5,6 +5,15 @@
 name: Mobsuccess Compliance
 
 on:
+  merge_group:
+    types:
+      - checks_requested
+
+  issue_comment:
+    types:
+      - created
+      - edited
+
   pull_request:
     types:
       - opened
@@ -14,13 +23,101 @@ on:
 jobs:
   MobsuccessPRCompliance:
     name: "Mobsuccess PR Compliance"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-slim
     timeout-minutes: 2
     steps:
       - uses: mobsuccess-devops/github-actions-mobsuccess@master
         with:
           github-token: ${{ github.token }}
-          amplify-uri: ${{ secrets.AWS_AMPLIFY_URI }}
-          storybook-amplify-uri: ${{ secrets.AWS_STORYBOOK_AMPLIFY_URI }}
+          amplify-uri: ${{ secrets.AWS_AMPLIFY_URI }}${{ vars.AWS_AMPLIFY_URI }}
+          storybook-amplify-uri: ${{ secrets.AWS_STORYBOOK_AMPLIFY_URI }}${{ vars.AWS_STORYBOOK_AMPLIFY_URI }}
           action: "validate-pr"
+
+      - name: Checkout
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Ignored directory replacement
+        if: github.event_name == 'pull_request'
+        run: |
+          set -uo pipefail
+          fail=0
+
+          die() { printf '%s\n' "::error::$(esc "$1")"; exit 1; }
+
+          esc() { local s=${1//'%'/%25}; s=${s//$'\r'/%0D}; s=${s//$'\n'/%0A}; printf '%s' "$s"; }
+          esc_prop() { local s; s=$(esc "$1"); s=${s//:/%3A}; s=${s//,/%2C}; printf '%s' "$s"; }
+
+          work=$(mktemp -d)
+          trap 'rm -rf "$work"' EXIT
+
+          git diff --raw -z --no-renames --diff-filter=AMT "$BASE_SHA...$HEAD_SHA" > "$work/diff" \
+            || die "Cannot diff $BASE_SHA...$HEAD_SHA. Refusing to pass without having checked."
+          git ls-tree -r -z --name-only "$HEAD_SHA" > "$work/tree" \
+            || die "Cannot list the tree at $HEAD_SHA. Refusing to pass without having checked."
+
+          sandbox="$work/sandbox"
+          mkdir -p "$sandbox"
+          git -C "$sandbox" init -q .
+
+          : > "$sandbox/.git/info/exclude"
+          ignored() {
+            git -c core.excludesFile=/dev/null -C "$sandbox" \
+              check-ignore -q --no-index -- "$1"
+          }
+
+          while IFS= read -r -d '' gi; do
+            case "$gi" in .gitignore|*/.gitignore) ;; *) continue ;; esac
+            mkdir -p "$sandbox/$(dirname "$gi")"
+            git show "$HEAD_SHA:$gi" > "$sandbox/$gi" \
+              || die "Cannot read $gi at $HEAD_SHA. Refusing to pass without having checked."
+          done < "$work/tree"
+
+          while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
+            mode=$(printf '%s' "$meta" | awk '{print $2}')
+            case "$mode" in 040000|000000) continue ;; esac
+
+            if ! ignored "$path" && ignored "$path/__probe__"; then
+              kind="file"
+              if [ "$mode" = "120000" ]; then
+                t=$(git show "$HEAD_SHA:$path") \
+                  || die "Cannot read the symlink target of $path at $HEAD_SHA."
+                kind="symlink -> $t"
+              fi
+              printf '%s\n' "::error file=$(esc_prop "$path")::$(esc "Tracking '$path' ($kind) will DELETE the ignored directory of the same name when this is merged or checked out — its contents are gitignored but the path itself is not.")"
+              fail=1
+            fi
+
+            if [ "$mode" = "120000" ]; then
+              target=$(git show "$HEAD_SHA:$path") \
+                || die "Cannot read the symlink target of $path at $HEAD_SHA."
+              resolved=$(python3 -c 'import posixpath,sys; print(posixpath.normpath(posixpath.join(posixpath.dirname(sys.argv[1]), sys.argv[2])))' "$path" "$target") \
+                || die "Cannot resolve the symlink target of $path."
+              escape=0
+              case "$target" in /*) escape=1 ;; esac
+              case "$resolved" in ..*) escape=1 ;; esac
+              if [ "$escape" -eq 1 ]; then
+                printf '%s\n' "::error file=$(esc_prop "$path")::$(esc "Symlink '$path' -> '$target' points outside the repository. Tracked symlinks must stay repo-internal.")"
+                fail=1
+              fi
+            fi
+          done < "$work/diff"
+
+          if [ "$fail" -ne 0 ]; then
+            echo ""
+            echo "Remove the offending entry from the commit: git rm --cached <path>"
+            echo ""
+            echo "Do NOT 'fix' the .gitignore instead: 'dir/*' plus '!dir/keep' cannot be"
+            echo "rewritten as a bare 'dir', because git will not re-include anything inside"
+            echo "an ignored directory. A bare 'dir' is correct only where there is no"
+            echo "negation to preserve."
+            exit 1
+          fi
+          echo "No ignored-directory replacement detected."
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 # DO NOT EDIT: END
