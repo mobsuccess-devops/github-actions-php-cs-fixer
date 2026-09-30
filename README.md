@@ -13,9 +13,9 @@ jobs:
     name: PHP-CS-Fixer
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: PHP-CS-Fixer
-      uses: docker://oskarstark/php-cs-fixer-ga
+      uses: mobsuccess-devops/github-actions-php-cs-fixer@master
 ```
 
 _to use a custom config for example, --diff and --dry-run option:_
@@ -27,23 +27,26 @@ jobs:
     name: PHP-CS-Fixer
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: PHP-CS-Fixer
-      uses: docker://oskarstark/php-cs-fixer-ga
+      uses: mobsuccess-devops/github-actions-php-cs-fixer@master
 +      with:
 +        args: --config=.project.php_cs --diff --dry-run
 ```
+
+The action builds its Docker image from the repository `Dockerfile` on the runner, so CI does not pull `public.ecr.aws/...` anonymously (which hits ECR Public data limits on shared GitHub runner IPs).
+
+Prefer `uses: mobsuccess-devops/github-actions-php-cs-fixer@...` over `uses: docker://public.ecr.aws/...`.
 
 **You can copy/paste the .github folder (under examples/) to your project and thats all!**
 
 ## Docker
 
-A Docker-Image is built automatically and located here:
-https://hub.docker.com/r/oskarstark/php-cs-fixer-ga
+You can still build and run the image locally:
 
-You can run it in any given directory like this:
+`docker compose build`
 
-`docker run --rm -it -w=/app -v ${PWD}:/app oskarstark/php-cs-fixer-ga:latest`
+`docker run --rm -it -w=/app -v ${PWD}:/app public.ecr.aws/u9q7y3l4/github-actions-php-cs-fixer:v3.13.0`
 
 ## A picture is worth a thousand words
 
