@@ -61,6 +61,6 @@ jobs:
         with:
           registry-type: 'public'
       - name: Build
-        run: docker-compose build --build-arg BUILDKIT_INLINE_CACHE=1
+        run: docker compose build --build-arg BUILDKIT_INLINE_CACHE=1
       - name: Push
-        run: docker-compose push
+        run: docker compose push

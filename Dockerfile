@@ -5,8 +5,7 @@ LABEL "com.github.actions.description"="check php files"
 LABEL "com.github.actions.icon"="check"
 LABEL "com.github.actions.color"="blue"
 
-# Match mobsuccess: PHP 8.1.34 + php-cs-fixer 3.13.0. Use the cli-alpine
-# variant (not the fuller php:8.1-alpine default) to keep the ECR image small.
+# Pin PHP 8.1.34 to match mobsuccess (same digest as php:8.1-alpine today).
 RUN wget -O /usr/local/bin/php-cs-fixer \
       https://github.com/FriendsOfPHP/PHP-CS-Fixer/releases/download/v3.13.0/php-cs-fixer.phar \
     && chmod a+x /usr/local/bin/php-cs-fixer
