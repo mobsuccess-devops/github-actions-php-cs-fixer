@@ -5,8 +5,8 @@ jobs:
     name: PHP-CS-Fixer
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@master
     - name: PHP-CS-Fixer
-      uses: mobsuccess-devops/github-actions-php-cs-fixer@master
+      uses: docker://oskarstark/php-cs-fixer-ga
       with:
         args: --diff --dry-run

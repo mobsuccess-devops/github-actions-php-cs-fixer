@@ -1,0 +1,66 @@
+on:
+  push:
+    branches:
+      - master
+name: ECR
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+jobs:
+  prepare-ecr:
+    name: Prepare ECR
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      role: ${{ steps.prepare.outputs.role }}
+      branch: ${{ steps.prepare.outputs.branch }}
+    steps:
+      - name: Prepare
+        id: prepare
+        run: |
+          case ${{github.ref}} in
+            refs/heads/master)
+              role=arn:aws:iam::983851922138:role/GHA,github-actions-php-cs-fixer
+              branch=master
+              ;;
+            *)
+              echo "Unknown ref: ${{github.ref}}"
+              exit 1
+              ;;
+          esac
+          echo branch: $branch
+          echo role: $role
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+          echo "role=$role" >> $GITHUB_OUTPUT
+  ecr:
+    name: ECR
+    runs-on: ubuntu-latest
+    needs: [prepare-ecr]
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Docker Compose
+        run: |
+          if [ ! -f docker-compose.${{needs.prepare-ecr.outputs.branch}}.yml ]; then
+            echo 'version: "3.8"' > docker-compose.${{needs.prepare-ecr.outputs.branch}}.yml
+          fi
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - uses: aws-actions/configure-aws-credentials@v1
+        name: Configure AWS Credentials (eu-central-1)
+        with:
+          role-to-assume: ${{needs.prepare-ecr.outputs.role}}
+          aws-region: us-east-1
+          role-duration-seconds: 900
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: 'public'
+      - name: Build
+        run: docker-compose build --build-arg BUILDKIT_INLINE_CACHE=1
+      - name: Push
+        run: docker-compose push
