@@ -29,6 +29,12 @@ docker run --rm -v "$PWD:/app" -w /app ghcr.io/mobsuccess-devops/github-actions-
 
 ## Image
 
+Base runtime: PHP 8.2 Alpine (`php:8.2-alpine`; pin `php:8.2.35-cli-alpine`
+when Docker Hub publishes the CVE-patched tag). PHP-CS-Fixer stays at
+**3.13.0** (same rules as today); `PHP_CS_FIXER_IGNORE_ENV=1` is set in the
+entrypoint so 3.13.0 can run on PHP 8.2. Bumping Fixer to ≥3.15.0 (official
+8.2 support) is a separate change — it can reformat consumer repos.
+
 A push to `master` that changes the `Dockerfile` or `entrypoint.sh` publishes
 the image to `ghcr.io/mobsuccess-devops/github-actions-php-cs-fixer`
 (`.github/workflows/docker.yml`), tagged with the PHP-CS-Fixer version. The
