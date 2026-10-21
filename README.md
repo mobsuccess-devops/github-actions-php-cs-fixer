@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: PHP-CS-Fixer
-        uses: docker://ghcr.io/mobsuccess-devops/github-actions-php-cs-fixer:v3.13.0
+        uses: docker://ghcr.io/mobsuccess-devops/github-actions-php-cs-fixer:v3.95.27
         with:
           args: --config=.php-cs-fixer.dist.php --diff --dry-run .
 ```
@@ -24,7 +24,7 @@ has other rules, and would reformat the code it checks.
 Locally, from the repository to check:
 
 ```bash
-docker run --rm -v "$PWD:/app" -w /app ghcr.io/mobsuccess-devops/github-actions-php-cs-fixer:v3.13.0 --diff --dry-run .
+docker run --rm -v "$PWD:/app" -w /app ghcr.io/mobsuccess-devops/github-actions-php-cs-fixer:v3.95.27 --diff --dry-run .
 ```
 
 ## Image
