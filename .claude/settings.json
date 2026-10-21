@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Shell|Edit|Write|Read|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.agents/hooks/security-guard/security-guard.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
