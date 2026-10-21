@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "matcher": "Shell|Edit|Write|Read|mcp__.*",
+        "command": ".agents/hooks/security-guard/security-guard.sh"
+      }
+    ]
+  }
+}
