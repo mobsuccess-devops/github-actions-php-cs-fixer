@@ -1,4 +1,4 @@
 services:
   php-cs-fixer:
     build: .
-    image: ghcr.io/mobsuccess-devops/github-actions-php-cs-fixer:v3.95.27
+    image: ghcr.io/mobsuccess-devops/github-actions-php-cs-fixer:v3.95.30
