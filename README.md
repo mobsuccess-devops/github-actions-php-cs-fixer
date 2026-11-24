@@ -59,7 +59,7 @@ newer than the ones its release supports (3.13 stopped at 8.1).
   their bump PR, or as a style-only PR first.
 - Check the base exists for amd64 and arm64: `docker manifest inspect php:<x.y.z>-alpine`.
 - Test: `docker compose build`, then `docker run --rm --entrypoint php <image> -v` and
-  `--entrypoint php-cs-fixer <image> --version`.
+  `docker run --rm --entrypoint php-cs-fixer <image> --version`.
 - **Patch** (8.5.12 → 8.5.13, security): change only `FROM`. The merge republishes the same tag
   `v<fixer version>` in place (#19), so consumers get the patch on their next run with no change.
   On a security patch, start this repo at the same time as every other repo pinning PHP.
